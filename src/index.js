@@ -1,9 +1,10 @@
-import OpenAI from "openai";
-import express from "express";
-import dotenv from "dotenv";
+const OpenAI = require("openai");
+const express = require("express");
+const dotenv = require("dotenv");
 
 dotenv.config();
 
+console.log("OPENAI_API_KEY:", process.env.OPENAI_API_KEY); 
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
     organization: process.env.OPENAI_ORGANIZATION,
@@ -23,20 +24,35 @@ app.post('/chat', async (req, res) => {
     console.log({ question });
 
     try {
-        const response = await openai.chat.completions.create({
-            model: "gpt-3.5-turbo",
-            messages: [{ role: "user", content: question }],
-            temperature: 0.7,
+        const response = await openai.Completion.create({
+            model: "text-davinci-003",
+            prompt: question,
+            max_tokens: 4000,
+            temperature: 0,
         });
 
-        const answer = response.choices[0].message.content;
-        res.json({ answer });
+        console.log({ response });
+
+        const answer = response.choices[0].text;
+        console.log({ answer });
+
+        const array = answer
+            ?.split("\n")
+            .filter((value) => value)
+            .map((value) => value.trim());
+
+        res.json({
+            answer: array,
+            prompt: question,
+        });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Something went wrong!" });
     }
 });
 
-app.listen(3000, () => {
-    console.log('Server is listening on port 3000');
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+    console.log(`Server is listening on port ${PORT}`);
 });
